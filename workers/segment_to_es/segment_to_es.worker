@@ -3,6 +3,6 @@ runtime "python"
 pip "elasticsearch"
 pip "iron_mq"
 # exec is the file that will be executed:
-exec "hello_worker.py"
+exec "segment_to_es.py"
 
 full_remote_build true
