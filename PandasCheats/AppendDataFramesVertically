@@ -1,0 +1,9 @@
+def CreateMasterPPD(glob, brand=None):
+    #Initialize empty DF
+    Masterdf=pandas.DataFrame()    
+    
+    #for dataframe in list create a dummy df to hold the temp, and append the temp to the master
+    for i in glob:
+        df= ImportPPD(i, brand)
+        Masterdf=Masterdf.append(df,ignore_index=True)
+    return Masterdf
