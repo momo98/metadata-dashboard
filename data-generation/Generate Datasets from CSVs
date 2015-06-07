@@ -1,0 +1,115 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jun 06 17:11:53 2015
+
+@author: agitzes
+"""
+#Load Appropriate Libraries
+from datetime import datetime
+from elasticsearch import Elasticsearch
+from iron_mq import IronMQ
+import pandas
+
+#Point to Datasets
+datadir='...github\\metadata-dashboard\\data-generation\\'
+
+
+#connection to es cluster
+es = Elasticsearch(['http://58d3ea40c46e8b15000.qbox.io:80'])
+
+#initiate ironmq connection
+ironmq = IronMQ(host="mq-aws-us-east-1.iron.io",
+            project_id="557330ae33f0350006000040",
+            token="JZsM3ArjIhEfiKlG52Bt99b7Hh4",
+            protocol="https", port=443,
+            api_version=1,
+            config_file=None)
+
+#specify the queue where seqment is writing 
+eventqueue = ironmq.queue("event-stream")
+
+
+#Load Datasets, Data as index
+Trends=pandas.read_csv(datadir+"GlobalmetadataTrends.csv", index="Date")
+interventions=pandas.read_csv(datadir+"interventions.csv", index="Date")
+weather=pandas.read_csv(datadir+"Globalmetadataweather.csv", index= "Date")
+CompPrice=pandas.read_csv(datadir+"Globalmetadataweather.csv", index = "Date")
+
+
+#Iterate row by row through dataset 
+for i in range (0,len(interventions)):
+
+
+#For each row, create Promotion event document
+    Promotions = {
+    "Index" : "Intervention",
+    "Date" : string.split(str(interventions.index[i])," ")[0],
+    "Type" : "Promotion",
+    "Properties": {"Value" : interventions.Promotion.iloc[i]}
+
+    }
+    
+  #For each row, create Campaign event document
+    Campaigns = {
+    "Index" : "Intervention",
+    "Date" : string.split(str(interventions.index[i])," ")[0],
+    "Type" : "Campaign",
+    "Properties": {"Value" : interventions.Campaign.iloc[i]}
+    
+    }
+    #For each row, create catastrophe document
+    Catastrophe = {
+    "Index" : "Intervention",
+    "Date" : string.split(str(interventions.index[i])," ")[0],
+    "Type" : "Campaign",
+    "Properties": {"Value" : interventions.Catastrophe.iloc[i]}
+    }
+    
+    #Load events to queue as JSON
+    eventqueue.post(json.dumps(Promotions, default=str))
+    eventqueue.post(json.dumps(Campaigns,default=str))
+    eventqueue.post(json.dumps(Catastrophe,default=str))
+
+#Iterate through rows of weather dataset
+for i in range(0,len(weather)):
+#Assign values from dataset to a propert dictionary
+    Properties={}
+    for k in weather.columns:
+        Properties[k] = metadata[k].iloc[i]
+    Measure = {
+    "Index" : "Metadata",
+    "Date" : string.split(str(weather.index[i])," ")[0],
+    "Type" : "Weather",
+    "Properties": Properties}
+    
+    eventqueue.post(json.dumps(Measure, default=str))
+
+#Iterate through rows of Trends dataset
+for i in range(0,len(Trends)):
+    Properties={}
+    #Assign values as properties
+    for k in Trends.columns:
+        Properties[k] = metadata[k].iloc[i]
+    Measure = {
+    "Index" : "Metadata",
+    "Date" : string.split(str(Trends.index[i])," ")[0],
+    "Type" : "Trends",
+    "Properties": Properties}
+    
+    eventqueue.post(json.dumps(Measure, default=str))
+    #Iterate through competitive pricing docs and place value in property->value
+for i in range (0, len (CompPrice)):
+    Measure = {
+    "Index" : "Metadata",
+    "Date" : string.split(str(CompPrice.index[i])," ")[0],
+    "Type" : "Competitive Pricing",
+    "Properties": {"Value":CompPrice.iloc[i]}}
+
+    eventqueue.post(json.dumps(Measure,default=str))
+
+ 
+       
+        
+        
+    
+    
