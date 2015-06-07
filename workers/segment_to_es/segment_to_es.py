@@ -33,17 +33,18 @@ for i in range(segment_queue.info()['size']):
         doc = {}
         #check if this is a track event
         if 'event' in body:
-            doc['event_type'] = body['event']
+            doc_type = body['event']
             doc['properties'] = body['properties']
-        #otherwise it is identify
+        #otherwise it is identify TODO: clean this up to handle different types 
         else:
-            doc['event_type'] = 'identify'
+            doc_type =  'identify'
             doc['traits'] = body['traits']
+            
         
         doc['userId'] = body['userId']
-        doc['timestamp'] = datetime(2015, 6, 2) # need to confirm how to parse this correctly 
+        doc['timestamp'] = datetime.strptime(body['Date'], '%Y-%m-%d')
         
-        res = es.index(index="test-index", doc_type='segment', id=queue_id, body=doc)
+        res = es.index(index=segment, doc_type=doc_type, id=queue_id, body=doc)
         if res['created'] == True:
             print 'success'
             segment_queue.delete(queue_id)
