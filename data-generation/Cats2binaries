@@ -2,13 +2,28 @@
 import pandas
 
 def transform2Binary(df):
+
+#Iterate through all columns
     for i in df.columns:
+    
+    #Identify categorical columns
         if df[i].dtype not in ("int64", "float64", "datetime64"):
+        
+        #Iterate through all possible values in the categorical variable 
             for k in df[i].value_counts().index:
+            
+            #Build a mask that is true when value = the value we are transforming to a column and false otherwise 
                 Example= df[i]==k
+                
+                #Set all values in the new column to 0
                 df[k]=0
+                
+                #where the value in column k = k, set the value to 1
                 df[k][Example]=1
+                
+            #remove the categorical column
             df.drop(i,inplace=True,axis=1)
+            
     return df
                 
             
